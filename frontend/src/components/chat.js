@@ -41,7 +41,7 @@ function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showMoodPicker, setShowMoodPicker] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false); // landing vs chat
+  const [hasStarted, setHasStarted] = useState(false);
   const [currentMood, setCurrentMood] = useState(null);
 
   const moodCopy = {
@@ -57,14 +57,16 @@ function Chat() {
       "You can be unsure and still moving forward. Clarity often comes after you put feelings into words.",
   };
 
+  const API_BASE_URL = "https://aura-mental-wellness-app.onrender.com";
+
   const detectEmotion = async (text) => {
     try {
-      const res = await axios.post("http://localhost:5000/api/detect-emotion", {
-        text,
-      });
+      console.log("🔍 Calling emotion detection for:", text);
+      const res = await axios.post(`${API_BASE_URL}/api/detect-emotion`, { text });
+      console.log("✅ Emotion result:", res.data);
       return res.data.emotion || "neutral";
     } catch (err) {
-      console.error("emotion error", err);
+      console.error("❌ Emotion detection FAILED:", err.response?.data || err.message);
       return "neutral";
     }
   };
@@ -83,30 +85,46 @@ function Chat() {
     setLoading(true);
 
     try {
+      console.log("🤖 Sending to backend:", {
+        message: newUserMsg.text,
+        personality: personality?.systemStyle || "default",
+        emotion: "detecting...",
+      });
+
       const emotion = await detectEmotion(newUserMsg.text);
 
-      const res = await axios.post("http://localhost:5000/api/chat", {
+      console.log("💬 Calling chat API with emotion:", emotion);
+      const res = await axios.post(`${API_BASE_URL}/api/chat`, {
         message: newUserMsg.text,
-        personality: personality.systemStyle,
+        personality: personality?.systemStyle || "default",
         uid: user?.uid,
         emotion,
       });
 
+      console.log("🎉 Chat API response:", res.data);
+
       const botMsg = {
         from: "bot",
-        text: res.data.reply,
+        text: res.data.reply || res.data.response || "No reply found",
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, botMsg]);
 
       setShowMoodPicker(true);
     } catch (err) {
-      console.error(err);
+      console.error("💥 FULL ERROR DETAILS:", {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        url: err.config?.url,
+      });
+      
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "Sorry, I had trouble responding.",
+          text: `Sorry, I had trouble responding. Error: ${err.response?.status || err.message}`,
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -188,7 +206,7 @@ function Chat() {
               <div className="flex flex-col gap-4">
                 <div className="bg-gradient-to-br from-pink-100 via-rose-100 to-sky-100 border border-pink-200 rounded-3xl p-4 md:p-5">
                   <p className="text-[11px] uppercase tracking-[0.18em] text-black/60 mb-2">
-                    Today&apos;s gentle reminder
+                    Today's gentle reminder
                   </p>
                   <p className="text-xs md:text-sm text-black">
                     You do not have to be "fine" to check in. This space is for
@@ -255,7 +273,7 @@ function Chat() {
                     <span className="text-base">✧</span>
                   </button>
                   <p className="text-[11px] text-black/70">
-                    No signup needed. You can just say "I don&apos;t know how I
+                    No signup needed. You can just say "I don't know how I
                     feel" and Aura will gently guide you.
                   </p>
                 </div>
@@ -265,8 +283,7 @@ function Chat() {
           {/* end landing notebook */}
         </div>
       </div>
-   
-  );
+    );
   }
 
   // ---------------- CHAT VIEW ----------------
@@ -386,37 +403,22 @@ function Chat() {
                   How are you feeling right now?
                 </p>
                 <div className="flex justify-between text-2xl">
-                  <button
-                    type="button"
-                    onClick={() => handleMoodSelect("sad")}
-                  >
+                  <button type="button" onClick={() => handleMoodSelect("sad")}>
                     😔
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoodSelect("stressed")}
-                  >
+                  <button type="button" onClick={() => handleMoodSelect("stressed")}>
                     😣
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoodSelect("anxious")}
-                  >
+                  <button type="button" onClick={() => handleMoodSelect("anxious")}>
                     😟
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoodSelect("confused")}
-                  >
+                  <button type="button" onClick={() => handleMoodSelect("confused")}>
                     😕
                   </button>
                   <button type="button" onClick={() => handleMoodSelect("ok")}>
                     🙂
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoodSelect("happy")}
-                  >
+                  <button type="button" onClick={() => handleMoodSelect("happy")}>
                     😄
                   </button>
                 </div>
