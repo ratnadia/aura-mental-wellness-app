@@ -1,7 +1,7 @@
 # Aura ✨ Mental Wellness Companion
 
 Live: https://aura-mental-wellness-app-5qlq.vercel.app/
-Backend: https://aura-mental-wellness-app.onrender.com/
+
 
 ## Tech Stack
 - Frontend: React + Tailwind CSS + Firebase
